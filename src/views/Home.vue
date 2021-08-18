@@ -1,9 +1,12 @@
 <template>
-  <div class="page-info">Your displayed name:</div>
-  <input class="input" type="text" v-model="playerName" :class="{ 'redText': inputError }" placeholder="Please enter your name" @keypress.enter="joinMatch">
-  <div v-if="inputError" class="error-info">Player name must be at least three symbols long!</div>
-  <PlayerList :isSelectionList="true"></PlayerList>
-  <button class="button next-button" :class="{ 'active': nameIsLongEnough }" @click="joinMatch">Next</button>
+  <div class="home view">
+    <div class="page-content">
+      <div class="page-info">Your displayed name:</div>
+      <input class="input" type="text" v-model="playerName" :class="{ 'redText': inputError }" placeholder="Please enter your name" @keypress.enter="joinMatch">
+      <div v-if="inputError" class="error-message">Player name must be at least three symbols long!</div>
+    </div>
+    <button class="button next-button" :class="{ 'active': nameIsLongEnough }" @click="joinMatch">Next</button>
+  </div>
 </template>
 
 <script>
@@ -59,10 +62,10 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.input.redText, .error-info {
-  color: rgb(165, 11, 11);
+.input.redText, .error-message {
+  color: var(--red);
 }
-.error-info {
+.error-message {
   margin: 4rem 0;
 }
 </style>

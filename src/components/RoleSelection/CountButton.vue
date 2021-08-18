@@ -44,8 +44,8 @@ export default {
 .button.roles-button {
   padding: 2rem 0;
   color: white;
-  background-color: rgb(95, 177, 95);
-  border-color: rgb(95, 177, 95);
+  background: var(--green-gradient);
+  border: none;
   display: flex;
   flex-direction: row;
 
@@ -70,12 +70,12 @@ export default {
     text-decoration: none;
     font-size: 4rem;
     font-family: inherit;
-    &.subtract {
-      margin-left: -0.35rem;
-    }
-    &.add {
-      margin-right: -0.35rem;
-    }
+    // &.subtract {
+    //   padding: 0 2rem;
+    // }
+    // &.add {
+    //   padding: 0 2rem;
+    // }
   }
 }
 </style>

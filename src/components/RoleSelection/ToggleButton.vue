@@ -29,7 +29,7 @@ export default {
 
 .button.active {
   color: white;
-  background-color: rgb(95, 177, 95);
-  border-color: rgb(95, 177, 95);
+  background: var(--green-gradient);
+  border: none;
 }
 </style>

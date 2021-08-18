@@ -1,10 +1,17 @@
 <template>
-  <div class="page-info">
-    {{$store.state.players.length}} Player<template v-if="$store.state.players.length>1">s</template> in Lobby
+  <div class="player-waiting view">
+    <div class="page-content">
+      <div class="page-info">
+        <template v-if="$store.state.players.length>1">{{$store.state.players.length}} Players in Lobby</template>
+        <template v-else>You are the only one waiting</template>
+      </div>
+      <PlayerList :isSelectionList="false"></PlayerList>
+      <div class="not-enough-players-error error-message" v-if="notEnoughPlayersError">
+        There are not enough Players to start the game!
+      </div>
+    </div>
+    <button v-if="isHost" class="button next-button" @click="startGame">Start Game</button>
   </div>
-
-  <PlayerList :isSelectionList="false"></PlayerList>
-  <button v-if="isHost" class="button next-button" @click="startGame">Start Game</button>
 </template>
 
 <script>
@@ -15,19 +22,23 @@ export default {
   name: "PlayerWaiting",
   data() {
     return {
-      isHost: false
+      isHost: false,
+      notEnoughPlayersError: false,
     }
   },
   components: {
     PlayerList,
   },
   watch: {
+    "$store.state.players.length" () {
+      this.$store.state.players.length >= 2 && (this.notEnoughPlayersError = false)
+    },
     "$store.state.isHost" () {
       this.isHost = this.$store.state.isHost
       this.routeToRoleSelection()
     },
     "$store.state.gameStarted" () {
-      this.$router.push({name: "Night"})
+      this.$router.push({name: "Game"})
     },
   },
   mounted() {
@@ -39,12 +50,20 @@ export default {
       (this.$store.state.isHost && !this.$store.state.rolesSelectionFinished) && this.$router.push({name: "RoleSelection"})
     },
     startGame() {
-      this.$store.commit('setRolesSelectionFinished')
-      this.$store.dispatch("startGame")
+      if (this.$store.state.players.length >= 2) {
+        this.$store.commit('setRolesSelectionFinished')
+        this.$store.dispatch("startGame")
+      } else {
+        this.notEnoughPlayersError = true
+      }
     }
   },
 }
 </script>
 
 <style scoped lang="scss">
+.error-message {
+  color: var(--red);
+  margin: 4rem 0;
+}
 </style>

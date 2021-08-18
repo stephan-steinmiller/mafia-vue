@@ -34,7 +34,7 @@ export default {
   width: 100%;
   font-size: 4rem;
   text-decoration: none;
-  color: white;
+  color: #2c3e50;
   border-radius: 0;
 }
 </style>

@@ -45,6 +45,7 @@ export default {
 <style scoped lang="scss">
 
 .list-item {
+  color: black;
   .radio-button.outer-circle {
     display: flex;
     align-items: center;
@@ -58,14 +59,14 @@ export default {
     text-decoration: none;
 
     &.is-selected {
-      border-color: rgb(95, 177, 95);
+      border-color: var(--green);
 
       .inner-circle {
         height: 4rem;
         width: 4rem;
 
         border-radius: 999999px;
-        background: rgb(95, 177, 95);
+        background: var(--green-gradient);
       }
     }
   }

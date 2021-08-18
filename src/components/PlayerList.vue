@@ -1,13 +1,33 @@
 <template>
-  <div class="player-list">
+  <div class="player-list" v-if="$store.state.players.length>0">
     <template v-if="this.isSelectionList">
-      <RadioButtonItem class="player-list-item selection-list" :content="player.playerId" :resetButton="resetButtonWithContent" @is-selected-changed="selectionChanged(player.playerId, $event)" v-for="player in $store.state.players" :key="player.playerId">
+      <RadioButtonItem
+        class="player-list-item selection-list"
+        :content="player.playerId"
+        :resetButton="resetButtonWithContent"
+        @is-selected-changed="selectionChanged(player.playerId, $event)"
+        v-for="player in $store.state.players"
+        :key="player.playerId"
+      >
         {{player.playerName}}
       </RadioButtonItem>
     </template>
-      <ListItem v-else class="player-list-item" v-for="player in $store.state.players" :key="player.playerId" :class="{ 'host': player.isHost, 'disconnected': !player.isConnected, }">
-        {{player.playerName}}
-      <button v-if="$store.state.isHost && (player.playerId !== $store.state.playerId)" class="button kick-button" @click="kickPlayer(player.playerId)">X</button>
+
+    <ListItem
+      v-else class="player-list-item"
+      v-for="player in $store.state.players"
+      :key="player.playerId"
+      :class="{
+        'host': player.isHost,
+        'disconnected': !player.isConnected,
+      }"
+    >
+      {{player.playerName}}
+      <button
+        v-if="$store.state.isHost && (player.playerId !== $store.state.playerId)"
+        class="button kick-button"
+        @click="kickPlayer(player.playerId)"
+      >X</button>
     </ListItem>
   </div>
 </template>
@@ -60,8 +80,8 @@ export default {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  border: 0.5rem solid #333333;
+  width: 80%;
+  border: 0.5rem solid #777676;
   border-radius: 5rem;
   .list-item:last-child {
     border-bottom: none;
@@ -74,21 +94,15 @@ export default {
 }
 
 .kick-button {
-  background-color: rgb(238, 55, 55);
+  background: var(--red-gradient);
 }
 
 .player-list-item {
   &.disconnected {
-    color: rgb(238, 55, 55);
+    color: var(--red);
   }
   &.host {
-    color: rgb(59, 59, 255);
+    color: var(--blue);
   }
-}
-
-.button.active {
-  color: white;
-  background-color: rgb(95, 177, 95);
-  border-color: rgb(95, 177, 95);
 }
 </style>

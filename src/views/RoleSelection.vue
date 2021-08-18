@@ -1,15 +1,17 @@
 <template>
-  <div class="role-selection">
-    <div class="page-info roles-info">Chose your citizens roles:</div>
-    <div class="roles">
-      <template v-for="(role, index) in roles" :key="role.roleName">
-        <div v-if="index === 6" class="page-info roles-info mafia">Chose your mafia roles:</div>
-        <CountButton v-if="role.countable" :roleName="role.roleName" @count-changed="onCountChanged(index, $event)">{{role.roleName}}</CountButton>
-        <ToggleButton v-else @active-changed="onActiveChanged(index, $event)">{{role.roleName}}</ToggleButton>
-      </template>
+  <div class="role-selection view">
+    <div class="page-content">
+      <div class="page-info roles-info">Chose your citizens roles:</div>
+      <div class="roles">
+        <template v-for="(role, index) in roles" :key="role.roleName">
+          <div v-if="index === 6" class="page-info roles-info mafia">Chose your mafia roles:</div>
+          <CountButton v-if="role.countable" :roleName="role.roleName" @count-changed="onCountChanged(index, $event)">{{role.roleName}}</CountButton>
+          <ToggleButton v-else @active-changed="onActiveChanged(index, $event)">{{role.roleName}}</ToggleButton>
+        </template>
+      </div>
     </div>
+    <button class="button next-button" :class="{ 'active': roleSelectionIsSufficient }" @click="nextPage">Accept</button>
   </div>
-  <button class="button next-button" :class="{ 'active': roleSelectionIsSufficient }" @click="nextPage">Accept</button>
 </template>
 
 <script>
@@ -90,14 +92,17 @@ export default {
   },
   mounted() {
     !this.$store.state.isHost && this.$router.push({path: "/playerWaiting"})
+    this.$store.state.roles.length > 0 && (this.roles = this.$store.state.roles)
   },
   methods: {
     onActiveChanged(index, isActive) {
       this.roles[index].count = isActive ? 1 : 0
+      this.$store.commit("setRoles", this.roles)
     },
 
     onCountChanged(index, count) {
       this.roles[index].count = count
+      this.$store.commit("setRoles", this.roles)
     },
     nextPage() {
       if (this.$store.state.isHost) {
@@ -119,7 +124,6 @@ export default {
 .roles-info{
   width: 100%;
   font-size: 4rem;
-  margin-top: 6rem;
 }
 
 .roles{
@@ -128,15 +132,10 @@ export default {
   justify-content: center;
   flex-flow: row wrap;
   gap: 1rem;
-  margin: 6rem 0;
   
 }
 
 .roles-button {
   min-width: none;
-}
-
-.next-button{
-  justify-self: flex-start; 
 }
 </style>

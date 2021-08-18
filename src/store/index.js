@@ -7,6 +7,7 @@ let socket = null
 
 export default createStore({
   state: {
+    roles: [],
     rolesPool: [],
     players: [],
     playerId: null,
@@ -17,6 +18,10 @@ export default createStore({
   },
 
   mutations: {
+    setRoles(state, roles) {
+      state.rolesPool = roles
+    },
+
     setRolesPool(state, rolesPool) {
       state.rolesPool = rolesPool
     },
