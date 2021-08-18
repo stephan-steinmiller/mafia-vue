@@ -2,10 +2,12 @@
   <div class="page-info">Your displayed name:</div>
   <input class="input" type="text" v-model="playerName" :class="{ 'redText': inputError }" placeholder="Please enter your name" @keypress.enter="joinMatch">
   <div v-if="inputError" class="error-info">Player name must be at least three symbols long!</div>
-  <button class="button next-button" :class="{ 'active': nameIsLongEnough }" @click="joinMatch">next</button>
+  <PlayerList :isSelectionList="true"></PlayerList>
+  <button class="button next-button" :class="{ 'active': nameIsLongEnough }" @click="joinMatch">Next</button>
 </template>
 
 <script>
+import PlayerList from '@/components/PlayerList.vue'
 // @ is an alias to /src
 
 export default {
@@ -30,6 +32,7 @@ export default {
     this.playerName = localStorage.getItem('playerName')
   },
   components: {
+    PlayerList,
   },
   methods: {
     joinMatch({target}) {

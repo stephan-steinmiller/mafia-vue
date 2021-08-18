@@ -70,7 +70,6 @@ export default {
     text-decoration: none;
     font-size: 4rem;
     font-family: inherit;
-    margin-top: -2.35rem;
     &.subtract {
       margin-left: -0.35rem;
     }

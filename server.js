@@ -92,6 +92,11 @@ io.on('connection', socket => {
     if(!onlinePlayers[registeredPlayerId]) {
       return null
     }
+    if (onlinePlayers[registeredPlayerId].isHost && pendingPlayers.length >= 1) {
+      onlinePlayers[registeredPlayerId].isHost = false
+      pendingPlayers.push(pendingPlayers.splice(pendingPlayers.indexOf(registeredPlayerId), 1)[0])
+      setHost()
+    }
 
     console.log(`${registeredPlayerId} disconnected`);
     onlinePlayers[registeredPlayerId].disconnectedAt = Date.now()
@@ -105,7 +110,7 @@ io.on('connection', socket => {
         deletePlayer(registeredPlayerId)
         registeredPlayerId = null;
         
-        deletedPlayerIsHost && setHost()
+        deletedPlayerIsHost && pendingPlayers.length >= 1 && setHost()
         sendPendingPlayers()
       }
     }, PLAYER_SESSION_TIMEOUT)

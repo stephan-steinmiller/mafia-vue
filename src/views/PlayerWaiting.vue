@@ -1,19 +1,14 @@
 <template>
-  <div class="player-waiting">
-    <ul>
-      <div class="page-info">
-        {{$store.state.players.length}} Player<template v-if="$store.state.players.length>1">s</template> in Lobby
-      </div>
-      <div class="players" v-for="player in $store.state.players" :key="player.playerName" :class="{ 'host': player.isHost, 'disconnected': !player.isConnected, }">
-        {{player.playerName}}
-        <button v-if="isHost && (player.playerId !== $store.state.playerId)" class="button">X</button>
-      </div>
-    </ul>
+  <div class="page-info">
+    {{$store.state.players.length}} Player<template v-if="$store.state.players.length>1">s</template> in Lobby
   </div>
+
+  <PlayerList :isSelectionList="false"></PlayerList>
   <button v-if="isHost" class="button next-button" @click="startGame">Start Game</button>
 </template>
 
 <script>
+import PlayerList from '@/components/PlayerList.vue'
 // @ is an alias to /src
 
 export default {
@@ -23,7 +18,9 @@ export default {
       isHost: false
     }
   },
-  components: {},
+  components: {
+    PlayerList,
+  },
   watch: {
     "$store.state.isHost" () {
       this.isHost = this.$store.state.isHost
@@ -50,12 +47,4 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.players {
-  &.disconnected {
-    color: rgb(238, 55, 55);
-  }
-  &.host {
-    color: rgb(59, 59, 255);
-  }
-}
 </style>

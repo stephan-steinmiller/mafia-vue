@@ -54,7 +54,7 @@ html {
   width: 100vw;
   overflow: hidden;
   height: 100vh;
-  padding: 2rem;
+  padding: 2rem 4rem;
   font-size: 16px;
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -83,8 +83,12 @@ html {
 }
 
 .button, .input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   padding: 2rem 4rem;
-  height: 9.5rem;
+  height: 10rem;
   background: rgb(95, 177, 95);
   color: white;
   border: none;
