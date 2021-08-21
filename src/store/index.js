@@ -10,8 +10,8 @@ export default createStore({
     roles: [],
     rolesPool: [],
     players: [],
-    playerId: null,
-    playerName: null,
+    playerId: "",
+    playerName: "",
     isHost: false,
     rolesSelectionFinished: false,
     gameState: GAME_STATES.INACTIVE,
@@ -66,8 +66,12 @@ export default createStore({
       commit("setRolesPool", rolesPool)
     },
 
-    connectToApi() {
+    connectToApi({ commit }) {
       socket = io("http://localhost:3000")
+      const playerId = localStorage.getItem('playerId')
+      const playerName = localStorage.getItem('playerName')
+      playerId && commit('setPlayerId', playerId)
+      playerName && commit('setPlayerName', playerName)
     },
 
     joinMatch({ dispatch, commit }) {

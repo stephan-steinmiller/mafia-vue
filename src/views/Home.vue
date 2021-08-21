@@ -1,7 +1,7 @@
 <template>
   <div class="home view">
     <div class="page-content">
-      <div class="page-info">Your displayed name:</div>
+      <div class="page-info">Your displayed name will be:</div>
       <input class="input" type="text" v-model="playerName" :class="{ 'redText': inputError }" placeholder="Please enter your name" @keypress.enter="joinMatch">
       <div v-if="inputError" class="error-message">Player name must be at least three symbols long!</div>
     </div>
@@ -32,7 +32,7 @@ export default {
     },
   },
   mounted() {
-    this.playerName = localStorage.getItem('playerName')
+    this.playerName = this.$store.state.playerName
   },
   components: {
     PlayerList,

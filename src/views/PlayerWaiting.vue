@@ -6,8 +6,13 @@
         <template v-else>You are the only one waiting</template>
       </div>
       <PlayerList :isSelectionList="false"></PlayerList>
-      <div class="not-enough-players-error error-message" v-if="notEnoughPlayersError">
-        There are not enough Players to start the game!
+      <div v-if="notEnoughPlayersError" class="not-enough-players-error error-message">
+        <div class="error-message">
+          There are not enough Players to start the game!
+        </div>
+        <div class="error-message">
+          You need at least 4 players to start the game!
+        </div>
       </div>
     </div>
     <button v-if="isHost" class="button next-button" @click="startGame">Start Game</button>
@@ -42,12 +47,13 @@ export default {
     },
   },
   mounted() {
+    (this.$store.state.playerId !== '' && this.$store.state.playerName !== '') || (this.$router.push({name: "Home"}))
     this.isHost = this.$store.state.isHost
     this.routeToRoleSelection()
   },
   methods: {
-    routeToRoleSelection () {
-      (this.$store.state.isHost && !this.$store.state.rolesSelectionFinished) && this.$router.push({name: "RoleSelection"})
+    routeToRoleSelection() {
+      (this.isHost && !this.$store.state.rolesSelectionFinished) && (this.$router.push({name: "RoleSelection"}))
     },
     startGame() {
       if (this.$store.state.players.length >= 2) {
@@ -65,5 +71,10 @@ export default {
 .error-message {
   color: var(--red);
   margin: 4rem 0;
+}
+.button.next-button {
+  background: var(--green-gradient);
+  color: white;
+  border: none;
 }
 </style>
