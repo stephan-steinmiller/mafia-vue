@@ -181,6 +181,7 @@ function createMatch(rolesPool) {
     players[currentIndex].role = rolesPool.splice(randomNumberGenerator(0, rolesPool.length-1), 1)[0]
     rolesPool.length<0 && rolesPool.push("Normal Citizen")
   })
+  console.log(players);
 
   mafiaPlayerIndex = randomNumberGenerator(0, players.length-1)
   console.log("mafiaPlayerIndex: "+ mafiaPlayerIndex, players.length-1);

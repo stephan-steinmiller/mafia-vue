@@ -56,12 +56,12 @@ export default {
       (this.isHost && !this.$store.state.rolesSelectionFinished) && (this.$router.push({name: "RoleSelection"}))
     },
     startGame() {
-      if (this.$store.state.players.length >= 2) {
+      // if (this.$store.state.players.length >= 2) {
         this.$store.commit('setRolesSelectionFinished')
         this.$store.dispatch("startGame")
-      } else {
-        this.notEnoughPlayersError = true
-      }
+      // } else {
+      //   this.notEnoughPlayersError = true
+      // }
     }
   },
 }
