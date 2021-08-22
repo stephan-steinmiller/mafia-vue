@@ -62,6 +62,12 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.input{
+  outline: none;
+}
+.input:focus{
+  border-radius: 0px;
+}
 .input.redText, .error-message {
   color: var(--red);
 }
