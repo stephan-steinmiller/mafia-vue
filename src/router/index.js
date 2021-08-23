@@ -20,12 +20,12 @@ const routes = [
     component: PlayerWaiting
   },
   {
-    path: '/game',
-    name: 'Game',
-    component: () => import(/* webpackChunkName: "night" */ '../views/Game.vue')
+    path: '/night',
+    name: 'Night',
+    component: () => import(/* webpackChunkName: "night" */ '../views/Night.vue')
   },
   {
-    path: '/game',
+    path: '/day',
     name: 'Day',
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
