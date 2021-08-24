@@ -44,7 +44,7 @@ export default {
 
         // if (isJoining) {
         if (this.$store.state.playerName !== this.playerName) {
-          const playerId = localStorage.getItem('playerId') || this.playerName + '-' + Date.now()
+          const playerId = localStorage.getItem('playerId') || Date.now()
           localStorage.setItem('playerId', playerId)
           localStorage.setItem('playerName', this.playerName)
           this.$store.dispatch("joinMatch")
