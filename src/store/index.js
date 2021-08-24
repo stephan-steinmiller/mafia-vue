@@ -12,6 +12,7 @@ export default createStore({
     players: [],
     playerId: "",
     playerName: "",
+    playerRole: "",
     isHost: false,
     rolesSelectionFinished: false,
     gameState: GAME_STATES.INACTIVE,
@@ -40,6 +41,10 @@ export default createStore({
 
     setPlayerName(state, playerName) {
       state.playerName = playerName
+    },
+
+    setPlayerRole(state, playerName) {
+      state.playerRole = layerName
     },
 
     setRolesSelectionFinished(state, rolesSelectionFinished) {
@@ -96,8 +101,10 @@ export default createStore({
         console.log("players-updated triggered");
         console.log(players);
         let amIHost = false
+        let myRole = ""
 
         players.find(player => {
+          player.playerId === playerId && myRole = player.role
           amIHost = (player.playerId === playerId && player.isHost)
           return amIHost
         })
