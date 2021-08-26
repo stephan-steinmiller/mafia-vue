@@ -20,7 +20,7 @@ const io = socketio(expressServer, {
 
 
 const PLAYER_SESSION_TIMEOUT = 20000
-let oRequest = false;
+let totalMatches: 0
 let onlinePlayers = {
   // Player5649893: { playerId: Player5649893, playerName: 'Stephan', socket, matchName: 'match1', isHost: true, isConnected: true }
   // Player5673940: { playerId: Player5673940, playerName: '', matchName: 'match1' }
@@ -29,7 +29,6 @@ let onlinePlayers = {
 }
 let pendingPlayers = []
 let games = {
-  totalMatches: 0
   // matchName: {
   //   players: [
   //     { playerId: Player5649893, playerName: 'Stephan', socket, match: 'match1', isHost: true },
@@ -54,6 +53,7 @@ io.on('connection', socket => {
       onlinePlayers[registeredPlayerId] = playerObject
       pendingPlayers.push(registeredPlayerId);
 
+      onlinePlayer[registeredPlayerId].socket.join(`match-${totalMatches}`)
       //first Player becomes Host-Player
       if(pendingPlayers.length === 1) {
         setHost()
@@ -71,7 +71,8 @@ io.on('connection', socket => {
 
 
     } else if(onlinePlayers[registeredPlayerId]) {
-      
+      onlinePlayer[registeredPlayerId].socket.join(`match-${totalMatches}`)
+        
       onlinePlayers[registeredPlayerId].disconnectedAt = null
       onlinePlayers[registeredPlayerId].isConnected = true
       onlinePlayers[registeredPlayerId].playerName = playerName
@@ -171,9 +172,16 @@ function pendingPlayersObjectList() {
 // }
 
 function createMatch(rolesPool) {
+  someoneIsDisconnected = false
+  pendingPlayers.find(( currentPlayer )=> {
+   someoneIsDisconnected = !onlinePlayers[currentPlayer].isConnected
+    return someoneIsDisconnected
+  })
+  if(pendingPlayers.length<=0 || someoneIsDisconnected) return
+
   console.log(rolesPool);
-  let matchName = `match-${games.totalMatches}`
-  games.totalMatches++;
+  let matchName = `match-${totalMatches}`
+  totalMatches++;
 
   let players = pendingPlayersObjectList()
   players.forEach( (currentPlayer, currentIndex) => {
@@ -196,11 +204,8 @@ function createMatch(rolesPool) {
   }
   console.log(games);
 
-
-  pendingPlayers.forEach( pendingPlayerId => {
-    onlinePlayers[pendingPlayerId].matchName = matchName
-    onlinePlayers[pendingPlayerId].socket.emit('match-created', games[matchName])
-  })
+  io.to("game").emit('match-created', games[matchName])
+  
   pendingPlayers = []
 
   // onlinePlayers[xPlayerName].socket.emit('match-created', 'x')

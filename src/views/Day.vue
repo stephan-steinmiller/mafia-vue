@@ -1,14 +1,9 @@
 <template>
   <div class="day">
-    <ul>
-      <ToggleButton class="player" v-for="player in $store.state.players" :key="player.playerName">
-        {{player.playerName}}
-      </ToggleButton>
-      <div class="page-info">Your role is: </div>
-      <div class="page-info">Vote someone to kill!</div>
-      
-      ul>
-      <ToggleButton @active-changed="onActiveChanged(index, $event)">{{}}</ToggleButton>
+    <div class="page-info">Your role is: </div>
+    <div class="page-info">Vote someone to kill!</div> 
+    <PlayerList :isSelectionList="false"></PlayerList>
+    <ToggleButton @active-changed="onActiveChanged(index, $event)">{{}}</ToggleButton>
   </div>
 </template>
 
