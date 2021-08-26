@@ -20,7 +20,7 @@ const io = socketio(expressServer, {
 
 
 const PLAYER_SESSION_TIMEOUT = 20000
-let totalMatches: 0
+let totalMatches = 0
 
 let onlinePlayers = {
   // Player5649893: { playerId: 5649893, playerName: 'Stephan', socket, matchName: 'match1', isHost: true, isConnected: true },
@@ -44,7 +44,7 @@ io.on('connection', socket => {
   let registeredPlayerId = null;
   console.log('new connection');
 
-  socket.on('entered-name', ({ playerName, playerID }) => {
+  socket.on('entered-name', ({ playerName, playerId }) => {
     console.log("Player registered: ", playerId, playerName);
     registeredPlayerId = playerId || Date.now();
 
@@ -57,7 +57,7 @@ io.on('connection', socket => {
       onlinePlayers[registeredPlayerId] = playerObject
       pendingPlayers.push(registeredPlayerId);
 
-      onlinePlayer[registeredPlayerId].socket.join(`match-${totalMatches}`)
+      onlinePlayers[registeredPlayerId].socket.join(`match-${totalMatches}`)
       //first Player becomes Host-Player
       if(pendingPlayers.length === 1) {
         setHost()
@@ -74,7 +74,7 @@ io.on('connection', socket => {
       }
       socket.emit("registered")
     } else if(onlinePlayers[registeredPlayerId]) {
-      onlinePlayer[registeredPlayerId].socket.join(`match-${totalMatches}`)
+      onlinePlayers[registeredPlayerId].socket.join(`match-${totalMatches}`)
         
       onlinePlayers[registeredPlayerId].disconnectedAt = null
       onlinePlayers[registeredPlayerId].isConnected = true

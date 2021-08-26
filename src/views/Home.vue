@@ -49,20 +49,16 @@ export default {
             this.$store.dispatch("joinMatch")
           }
         }
-        else this.$router.push({name: "PlayerWaiting"})
-      } 
+        else this.$router.push({name: "PlayerWaiting"}) 
       }
-    },
-  },
+    }
+  }
 }
 </script>
 
 <style scoped lang="scss">
 .input{
   outline: none;
-}
-.input:focus{
-  border-radius: 0px;
 }
 .input.redText, .error-message {
   color: var(--red);

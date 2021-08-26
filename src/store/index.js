@@ -44,7 +44,7 @@ export default createStore({
     },
 
     setPlayerRole(state, playerName) {
-      state.playerRole = layerName
+      state.playerRole = playerName
     },
 
     setRolesSelectionFinished(state, rolesSelectionFinished) {
@@ -92,7 +92,7 @@ export default createStore({
       })
 
       socket.on('registered', match => {
-        this.$router.push({name: "PlayerWaiting"})
+        // this.$router.push({name: "PlayerWaiting"})
 
         const playerId = localStorage.getItem('playerId')
         const playerName = localStorage.getItem('playerName')
@@ -117,13 +117,15 @@ export default createStore({
         let myRole = ""
         
         players.find(player => {
-          player.playerName === playerName && myRole = player.role
           amIHost = (player.playerName === playerName && player.isHost)
+          player.playerName === playerName && (myRole = player.role)
           return amIHost
         })
 
         console.log("amIHost:",amIHost)
         commit('setIsHost', amIHost)
+        console.log("myRole:",myRole)
+        commit('setPlayerRole', myRole)
         console.log("state.isHost:",state.isHost)
         commit('setPlayers', players)
       })
