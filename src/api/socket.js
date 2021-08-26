@@ -1,7 +1,7 @@
 export const joinMatch = (socket) => {
-  let playerName = localStorage.getItem('playerName')
-  let playerId = localStorage.getItem('playerId')
-  socket.emit('registered', { playerName, playerId })
+  const playerName = localStorage.getItem('playerName')
+  const playerId = localStorage.getItem('playerId')
+  socket.emit('entered-name', { playerName, playerId })
 }
 
 export const startGame = (socket, rolesPool) => {

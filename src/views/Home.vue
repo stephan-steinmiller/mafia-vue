@@ -39,22 +39,18 @@ export default {
   },
   methods: {
     joinMatch({target}) {
-      if (this.nameIsLongEnough) {
-        // const isJoining = confirm("Are you sure that you want to join with the name " + this.playerName)
-
-        // if (isJoining) {
+      if (this.nameIsLongEnough) this.inputError = true 
+      else {
         if (this.$store.state.playerName !== this.playerName) {
-          const playerId = localStorage.getItem('playerId') || Date.now()
-          localStorage.setItem('playerId', playerId)
-          localStorage.setItem('playerName', this.playerName)
-          this.$store.dispatch("joinMatch")
+          const playerId = localStorage.getItem('playerId')
+          if(localStorage.getItem('playerId')) {
+            localStorage.setItem('playerId', playerId)
+            localStorage.setItem('playerName', this.playerName)
+            this.$store.dispatch("joinMatch")
+          }
         }
-          
-        this.$router.push({name: "PlayerWaiting"})
-        // } 
-      } else {
-        console.log(this.inputError = true);
-        this.inputError = true
+        else this.$router.push({name: "PlayerWaiting"})
+      } 
       }
     },
   },

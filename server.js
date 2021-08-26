@@ -13,7 +13,7 @@ console.log(`Server listening on port ${port}`)
 
 const io = socketio(expressServer, {
   cors: {
-    origin: ["http://localhost:8080", "http://192.168.178.30:8080/"],
+    origin: ["http://localhost:8080", "http://192.168.178.30:8080/", "https://mafia-vue.surge.sh/"],
     methods: ["GET", "POST"]
   }
 });
@@ -21,35 +21,39 @@ const io = socketio(expressServer, {
 
 const PLAYER_SESSION_TIMEOUT = 20000
 let totalMatches: 0
+
 let onlinePlayers = {
-  // Player5649893: { playerId: Player5649893, playerName: 'Stephan', socket, matchName: 'match1', isHost: true, isConnected: true }
-  // Player5673940: { playerId: Player5673940, playerName: '', matchName: 'match1' }
-  // Player5649893: { playerId: Player5649893, playerName: '', matchName: 'match2' }
-  // Player5673940: { playerId: Player5673940, playerName: '', matchName: 'match2' }
+  // Player5649893: { playerId: 5649893, playerName: 'Stephan', socket, matchName: 'match1', isHost: true, isConnected: true },
+  // Player5673940: { ... },
+  // Player5649893: { ... },
+  // Player5673940: { ... }
 }
 let pendingPlayers = []
 let games = {
   // matchName: {
   //   players: [
-  //     { playerId: Player5649893, playerName: 'Stephan', socket, match: 'match1', isHost: true },
-  //     { playerId: Player5673940, playerName: '', matchName: 'match1' },
-  //     { playerId: Player5673940, playerName: '', matchName: 'match2' }
-  //   ] 
-  //   status: GAME_STATES.ACTIVE,
+  //     { playerId: 5649893, playerName: 'Stephan', socket, match: 'match1', isHost: true },
+  //     { ... },
+  //     { ... }
+  //   ],
+  //   status: GAME_STATES.ACTIVE
   // }
 };
 
 io.on('connection', socket => {
-  let matchName = null;
   let registeredPlayerId = null;
   console.log('new connection');
 
-  socket.on('registered', ({playerId, playerName}) => {
-  console.log(playerId, playerName);
-  registeredPlayerId = playerId;
-  
-    if(!onlinePlayers[registeredPlayerId]) {
-      let playerObject = { playerId: registeredPlayerId, playerName, socket, matchName, isHost: false, isConnected: true}
+  socket.on('entered-name', ({ playerName, playerID }) => {
+    console.log("Player registered: ", playerId, playerName);
+    registeredPlayerId = playerId || Date.now();
+
+    if(pendingPlayers.find( (pendingPlayer) => {
+      return pendingPlayer.playerName === playerName
+    })) socket.emit("name-already-taken")
+
+    else if(!onlinePlayers[registeredPlayerId]) {
+      let playerObject = { playerId: registeredPlayerId, playerName, socket, isHost: false, isConnected: true}
       onlinePlayers[registeredPlayerId] = playerObject
       pendingPlayers.push(registeredPlayerId);
 
@@ -62,14 +66,13 @@ io.on('connection', socket => {
       console.log('player socket id registered: ' + socket.id);
       console.log('with playerName: ' + onlinePlayers[registeredPlayerId].playerName);
 
-      // only Host-Player can  start the game
+      // only Host-Player can start the game
       if (playerObject.isHost) {
         socket.on('start-game', roles => {
           createMatch(roles)
         })
       }
-
-
+      socket.emit("registered")
     } else if(onlinePlayers[registeredPlayerId]) {
       onlinePlayer[registeredPlayerId].socket.join(`match-${totalMatches}`)
         
@@ -83,6 +86,7 @@ io.on('connection', socket => {
           createMatch(roles)
         })
       }
+      socket.emit("registered")
     }
     sendPendingPlayers()
   })
@@ -147,41 +151,19 @@ const sendPendingPlayers = () => {
 function pendingPlayersObjectList() {
   return pendingPlayers.map( currentPlayerId => {
     const player = onlinePlayers[currentPlayerId]
-    return { playerName: player.playerName, playerId: player.playerId, isHost: player.isHost, isConnected: player.isConnected }
+    return { playerName: player.playerName, isHost: player.isHost, isConnected: player.isConnected }
   })
 }
 
 
-// function deleteMatch(matchName) {
-//     if (games[matchName].xPlayer) {
-//         let xPlayer = games[matchName].xPlayer;
-//     }
-//     if (games[matchName].oPlayer) {
-//         let oPlayer = games[matchName].oPlayer;
-//     }
-//     if ((onlinePlayers[xPlayer])) {
-//         onlinePlayers[xPlayer].match = null;
-//         pendingPlayers.push(xPlayer)
-//     }
-//     if ((onlinePlayers[oPlayer])) {
-//         onlinePlayers[oPlayer].match = null;
-//         pendingPlayers.push(oPlayer)
-//     }
-//     delete games[matchName];
-//     games.totalMatches--;
-// }
+function deleteMatch(matchName) {
+  // TODO
+}
 
 function createMatch(rolesPool) {
-  someoneIsDisconnected = false
-  pendingPlayers.find(( currentPlayer )=> {
-   someoneIsDisconnected = !onlinePlayers[currentPlayer].isConnected
-    return someoneIsDisconnected
-  })
-  if(pendingPlayers.length<=0 || someoneIsDisconnected) return
-
+  totalMatches++;
   console.log(rolesPool);
   let matchName = `match-${totalMatches}`
-  totalMatches++;
 
   let players = pendingPlayersObjectList()
   players.forEach( (currentPlayer, currentIndex) => {
@@ -207,22 +189,8 @@ function createMatch(rolesPool) {
   io.to("game").emit('match-created', games[matchName])
   
   pendingPlayers = []
+}
 
-  // onlinePlayers[xPlayerName].socket.emit('match-created', 'x')
-  // onlinePlayers[oPlayerName].socket.emit('match-created', 'o')
-
-  // onlinePlayers[xPlayerName].socket.on('set-field', move => {
-  //   // one of the players made a move
-  //   console.log(`x in ${matchName}: ${move}`);
-  //   onlinePlayers[oPlayerName].socket.emit('field', move);
-  // });
-  // onlinePlayers[oPlayerName].socket.on('set-field', move => {
-  //   // one of the players made a move
-  //   console.log(`o in ${matchName}: ${move}`);
-  //   onlinePlayers[xPlayerName].socket.emit('field', move);
-  // });
-
-  function randomNumberGenerator (min, max) {
-    return Math.floor(Math.random()*max)+min
-  }
+function randomNumberGenerator (min, max) {
+  return Math.floor(Math.random()*max)+min
 }

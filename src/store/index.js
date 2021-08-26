@@ -82,30 +82,43 @@ export default createStore({
     joinMatch({ dispatch, commit }) {
       const playerId = localStorage.getItem('playerId')
       const playerName = localStorage.getItem('playerName')
-      commit('setPlayerId', playerId)
-      commit('setPlayerName', playerName)
-      console.log(playerId);
+      playerId && commit('setPlayerId', playerId)
+      playerName && commit('setPlayerName', playerName)
       joinMatch(socket)
       dispatch('getUpdatedPlayers', playerId)
 
-      socket.on('match-created', match => {
-        commit('setPlayers', match.players)
-        commit('setRolesPool', match.rolesPool)
-        commit('setGameState', match.gameState)
+      socket.on("name-already-taken", () => {
+        // TODO
+      })
+
+      socket.on('registered', match => {
+        this.$router.push({name: "PlayerWaiting"})
+
+        const playerId = localStorage.getItem('playerId')
+        const playerName = localStorage.getItem('playerName')
+        playerId && commit('setPlayerId', playerId)
+        playerName && commit('setPlayerName', playerName)
+
+        socket.on('match-created', match => {
+          commit('setPlayers', match.players)
+          commit('setRolesPool', match.rolesPool)
+          commit('setGameState', match.gameState)
+        })
       })
     },
 
-    getUpdatedPlayers({ commit, dispatch, state }, playerId) {
-
+    getUpdatedPlayers({ commit, dispatch, state }) {
+      
       socket.on('players-updated', players => {
         console.log("players-updated triggered");
         console.log(players);
+        const playerName = state.playerName
         let amIHost = false
         let myRole = ""
-
+        
         players.find(player => {
-          player.playerId === playerId && myRole = player.role
-          amIHost = (player.playerId === playerId && player.isHost)
+          player.playerName === playerName && myRole = player.role
+          amIHost = (player.playerName === playerName && player.isHost)
           return amIHost
         })
 
