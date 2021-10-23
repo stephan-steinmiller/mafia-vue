@@ -1,6 +1,6 @@
 <template>
-  <div class="night">
-    <div class="page-info role-info" :class="{ 'mafia-role': playerRole }">Your role is: </div>
+  <div class="night view">
+    <div class="page-info role-info" :class="{ 'mafia-role': playerRole }">Your role is: {$store.state.playerRole}</div>
     <div class="page-info">Vote someone to kill!</div> 
     <PlayerList :isSelectionList="false"></PlayerList>
     <ToggleButton @active-changed="onActiveChanged(index, $event)">{{}}</ToggleButton>
@@ -32,6 +32,9 @@ export default {
     }
   },
   watch: {
+    "$store.state.isDay"() {
+      this.$store.state.isDay && this.$router.push({name: "Day"})
+    }
   },
   methods: {
     onActiveChanged() {

@@ -11,9 +11,12 @@
 
 export default {
   name: 'ToggleButton',
+  props: {
+    isActiveDefault: Boolean,
+  },
   data() {
     return {
-      isActive: false,
+      isActive: this.isActiveDefault || false,
     }
   },
   methods: {
@@ -31,5 +34,8 @@ export default {
   color: white;
   background: var(--green-gradient);
   border: none;
+}
+.button:not(.active) {
+  padding: 0 3.65rem;
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
-      <button  class="button roles-button" :class="{ 'inactive-button': roleCount === 0 }">
-        <button class="count-button subtract" @click="onChange(false)">-</button>
-        {{roleCount}} <slot>Default Role</slot>
-        <button class="count-button add" @click="onChange(true)">+</button>
-      </button>
+  <button  class="button roles-button" :class="{ 'inactive-button': roleCount === 0 }">
+    <button class="count-button subtract" @click="onChange(false)">-</button>
+    {{roleCount}} <slot>Default Role</slot>
+    <button class="count-button add" @click="onChange(true)">+</button>
+  </button>
 </template>
 
 <script>
@@ -15,14 +15,15 @@ export default {
   name: 'CountButton',
   props: {
     roleName: String,
+    roleCountDefault: Number,
   },
   data() {
     return {
-      roleCount: 0,
+      roleCount: this.roleCountDefault || 0,
     }
   },
   mounted() {
-    (this.roleName === ROLE_NAMES.NORMAL_MAFIA) && this.onChange(true)
+    (this.roleName === ROLE_NAMES.NORMAL_MAFIA && this.roleCountDefault == 0) && this.onChange(true)
   },
   methods: {
     onChange(isAdd) {

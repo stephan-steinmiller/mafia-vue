@@ -5,8 +5,21 @@
       <div class="roles">
         <template v-for="(role, index) in roles" :key="role.roleName">
           <div v-if="index === 6" class="page-info roles-info mafia">Chose your mafia roles:</div>
-          <CountButton v-if="role.countable" :roleName="role.roleName" @count-changed="onCountChanged(index, $event)">{{role.roleName}}</CountButton>
-          <ToggleButton v-else @active-changed="onActiveChanged(index, $event)">{{role.roleName}}</ToggleButton>
+          <CountButton
+            v-if="role.countable"
+            :roleName="role.roleName"
+            :roleCountDefault="1"
+            @count-changed="onCountChanged(index, $event)"
+          >
+          {{role.roleName}}
+          </CountButton>
+          <ToggleButton 
+            v-else
+            :isActiveDefault="true"
+            @active-changed="onActiveChanged(index, $event)"
+          >
+          {{role.roleName}}
+          </ToggleButton>
         </template>
       </div>
     </div>
@@ -28,40 +41,40 @@ export default {
         {
           roleName: "Normal Citizen",
           countable: true,
-          count: 0,
+          count: 1,
         },
         {
           roleName: "Detective",
-          count: 0,
+          count: 1,
         },
         {
           roleName: "Doctor",
-          count: 0,
+          count: 1,
         },
         {
           roleName: "Joker",
-          count: 0,
+          count: 1,
         },
         {
           roleName: "Eulenspiegel",
-          count: 0,
+          count: 1,
         },
         {
           roleName: "Employment Agent",
-          count: 0,
+          count: 1,
         },
         {
           roleName: "Normal Mafia",
           countable: true,
-          count: 0,
+          count: 1,
         },
         {
           roleName: "Godfather",
-          count: 0,
+          count: 1,
         },
         {
           roleName: "Cover",
-          count: 0,
+          count: 1,
         },
       ],
     }

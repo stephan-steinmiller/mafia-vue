@@ -1,5 +1,5 @@
 import { createStore } from 'vuex'
-import { joinMatch, startGame } from '../api/socket'
+import { joinMatch, startGame, kickPlayer } from '../api/socket'
 const { GAME_STATES } = require('../constants')
 const io = require('socket.io-client')
 let socket = null
@@ -13,52 +13,66 @@ export default createStore({
     playerId: "",
     playerName: "",
     playerRole: "",
+    matchName: "",
     isHost: false,
     rolesSelectionFinished: false,
+    nameIsAlreadyTaken: false,
+    dayCount: 0,
+    isDay: false,
     gameState: GAME_STATES.INACTIVE,
+    playerToKickName: "",
   },
 
   mutations: {
     setRoles(state, roles) {
       state.rolesPool = roles
     },
-
     setRolesPool(state, rolesPool) {
       state.rolesPool = rolesPool
     },
-
     setPlayers(state, players) {
       state.players = players
     },
-
     setIsHost(state, isHost) {
       state.isHost = isHost
     },
-    
-    setPlayerId(state, playerId) {
-      state.playerId = playerId
+    setPlayerId(state, id) {
+      localStorage.setItem('playerId', id)
+      state.playerId = id
     },
-
-    setPlayerName(state, playerName) {
-      state.playerName = playerName
+    setPlayerName(state, name) {
+      state.playerName = name
     },
-
-    setPlayerRole(state, playerName) {
-      state.playerRole = playerName
+    setPlayerRole(state, role) {
+      state.playerRole = role
     },
-
+    setMatchName(state, matchName) {
+      state.matchName = matchName
+    },
     setRolesSelectionFinished(state, rolesSelectionFinished) {
       state.rolesSelectionFinished = rolesSelectionFinished
     },
-
+    setNameIsAlreadyTaken(state, nameIsAlreadyTaken) {
+      state.nameIsAlreadyTaken = nameIsAlreadyTaken
+    },
+    
+    setDayCount(state, dayCount) {
+      state.dayCount = dayCount
+    },
     setGameState(state, gameState) {
       state.gameState = gameState
+    },
+    setIsDay(state, isDay) {
+      state.isDay = isDay
+    },
+    setPlayerToKickName(state, playerName) {
+      state.playerToKickName = playerName
     },
   },
 
   actions: {
     setRolesPool({commit}, roles) {
-      let temporaryRoles = roles
+      const temporaryRoles = roles
       let rolesPool = []
       temporaryRoles.forEach( role => {
         for(var i=0; i<role.count; i++) {
@@ -71,68 +85,80 @@ export default createStore({
       commit("setRolesPool", rolesPool)
     },
 
-    connectToApi({ commit }) {
+    connectToApi() {
       socket = io("http://localhost:3000")
-      const playerId = localStorage.getItem('playerId')
-      const playerName = localStorage.getItem('playerName')
-      playerId && commit('setPlayerId', playerId)
-      playerName && commit('setPlayerName', playerName)
     },
 
-    joinMatch({ dispatch, commit }) {
+    joinMatch({ state, dispatch, commit }) {
+      console.log("store/index l.88 join");
       const playerId = localStorage.getItem('playerId')
       const playerName = localStorage.getItem('playerName')
-      playerId && commit('setPlayerId', playerId)
-      playerName && commit('setPlayerName', playerName)
       joinMatch(socket)
-      dispatch('getUpdatedPlayers', playerId)
 
-      socket.on("name-already-taken", () => {
-        // TODO
+      socket.on("name-is-already-taken", () => {
+        commit("setNameIsAlreadyTaken", { state, nameIsAlreadyTaken: true })
       })
 
-      socket.on('registered', match => {
-        // this.$router.push({name: "PlayerWaiting"})
-
-        const playerId = localStorage.getItem('playerId')
+      socket.on('registered', playerId => {
+        console.log("registered ", playerId);
         const playerName = localStorage.getItem('playerName')
         playerId && commit('setPlayerId', playerId)
         playerName && commit('setPlayerName', playerName)
 
         socket.on('match-created', match => {
-          commit('setPlayers', match.players)
-          commit('setRolesPool', match.rolesPool)
-          commit('setGameState', match.gameState)
+          console.log("match created")
         })
+        dispatch('getMatchInfoUpdate')
+        dispatch('getRoleUpdate')
+
       })
     },
 
-    getUpdatedPlayers({ commit, dispatch, state }) {
-      
-      socket.on('players-updated', players => {
-        console.log("players-updated triggered");
-        console.log(players);
-        const playerName = state.playerName
-        let amIHost = false
-        let myRole = ""
+    getRoleUpdate({ commit, dispatch, state }) {
+      socket.on('role-changed', roleName => {
+        console.log("roleName:",roleName)
+        commit('setPlayerRole', roleName)
         
-        players.find(player => {
-          amIHost = (player.playerName === playerName && player.isHost)
-          player.playerName === playerName && (myRole = player.role)
-          return amIHost
-        })
+        dispatch('getRoleUpdate')
+      })
+    },
 
-        console.log("amIHost:",amIHost)
-        commit('setIsHost', amIHost)
-        console.log("myRole:",myRole)
-        commit('setPlayerRole', myRole)
-        console.log("state.isHost:",state.isHost)
-        commit('setPlayers', players)
+    startGame({ state }) {
+      startGame(socket, state.rolesPool)
+    },
+
+    getMatchInfoUpdate({ commit, dispatch, state }) {
+      socket.on('match-info-update', match => {
+        console.log("players-updated triggered");
+        console.log(match);
+        console.log(match.players);
+        const playerName = state.playerName
+        const isHost = match.hostPlayerName === playerName
+
+        commit('setIsHost', isHost)
+        commit('setPlayers', match.players)
+        commit('setGameState', match.gameState)
+        commit('setMatchName', match.matchName)
+        commit('setDayCount', match.dayCount)
+        commit('setIsDay', match.isDay)
+        
+        console.log("isHost:", isHost)
+        console.log("state.isHost:", state.isHost)
+        console.log("match.gameState:", match.gameState)
+        console.log("matchName:", match.matchName)
+        console.log("dayCount:", match.dayCount)
+        console.log("isDay:", match.isDay)
+
+        dispatch('getMatchInfoUpdate')
       })
     },
     
     startGame({ state }) {
       startGame(socket, state.rolesPool)
+    },
+
+    kickPlayer({ state }) {
+      if(state.isHost) kickPlayer(socket, state.playerName)
     },
   },
   

@@ -7,3 +7,7 @@ export const joinMatch = (socket) => {
 export const startGame = (socket, rolesPool) => {
   socket.emit('start-game', rolesPool )
 }
+
+export const kickPlayer = (socket, playerNameToKick) => {
+  socket.emit('kick-player', playerNameToKick )
+}

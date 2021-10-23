@@ -1,6 +1,6 @@
 <template>
   <ListItem class="list-item button" @click="onToggle()">
-    <slot>Player Name</slot>
+    {{content}}
     <div class="radio-button outer-circle" :class="{ 'is-selected': isSelected }">
       <div class="radio-button inner-circle"></div>
     </div>

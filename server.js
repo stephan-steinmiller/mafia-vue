@@ -9,7 +9,7 @@ app.use(express.static(__dirname + '/client'))
 
 const port = process.env.PORT
 const expressServer = app.listen(port)
-console.log(`Server listening on port ${port}`)
+console.log(`l.12 Server listening on port ${port}`)
 
 const io = socketio(expressServer, {
   cors: {
@@ -20,7 +20,7 @@ const io = socketio(expressServer, {
 
 
 const PLAYER_SESSION_TIMEOUT = 20000
-let totalMatches = 0
+let totalMatches = 1000000
 
 let onlinePlayers = {
   // Player5649893: { playerId: 5649893, playerName: 'Stephan', socket, matchName: 'match1', isHost: true, isConnected: true },
@@ -28,11 +28,12 @@ let onlinePlayers = {
   // Player5649893: { ... },
   // Player5673940: { ... }
 }
-let pendingPlayers = []
+let registeredPlayers = [/* Player5649893, Player5673940, Player5673940 */]
+// let pendingPlayers = []
 let games = {
   // matchName: {
   //   players: [
-  //     { playerId: 5649893, playerName: 'Stephan', socket, match: 'match1', isHost: true },
+  //     { playerId: 5649893, playerName: 'Stephan', socket, isHost: true },
   //     { ... },
   //     { ... }
   //   ],
@@ -42,71 +43,108 @@ let games = {
 
 io.on('connection', socket => {
   let registeredPlayerId = null;
-  console.log('new connection');
+  console.log('l.46 new connection');
 
-  socket.on('entered-name', ({ playerName, playerId }) => {
-    console.log("Player registered: ", playerId, playerName);
+  socket.on('entered-name', ({ playerName, playerId, gameCode }) => {
+    console.log("l.49 parameters: ", playerName, playerId, gameCode)
+    console.log("l.50 Player registered: ", playerId, playerName);
+    playerName = playerName.trim()
     registeredPlayerId = playerId || Date.now();
+    const matchName = gameCode || `match-${totalMatches}`
+    
+    // Player is reconnecting
 
-    if(pendingPlayers.find( (pendingPlayer) => {
-      return pendingPlayer.playerName === playerName
-    })) socket.emit("name-already-taken")
+    if(onlinePlayers[registeredPlayerId]) {
+      console.log("l.55 Player is reconnecting");
+      const matchName = onlinePlayers[registeredPlayerId].matchName
+
+      let playerObject = { playerName, playerId: registeredPlayerId, socket, matchName, isConnected: true, disconnectedAt: null}
+      onlinePlayers[registeredPlayerId] = playerObject
+      const matchPlayerObject = { playerId: registeredPlayerId, playerName, isHost: onlinePlayers[registeredPlayerId].isHost, isConnected: true }
+      games[matchName].players.splice(games[matchName].players.indexOf(registeredPlayerId), 1)[0]
+      games[matchName].players.push(matchPlayerObject)
+      
+      onlinePlayers[registeredPlayerId].socket.join(matchName)
+      socket.emit("registered", registeredPlayerId)
+      updateMatchInfo(matchName)
+      if(games[matchName].status === GAME_STATES.ACTIVE){}
+      // TODO
+      else if(games[matchName].status === GAME_STATES.INACTIVE) updateMatchInfo(matchName)
+      else if (onlinePlayers[registeredPlayerId] && onlinePlayers[registeredPlayerId].isHost)
+        socket.on( 'start-game', roles => {
+          if (onlinePlayers[registeredPlayerId].isHost)
+            startMatch(roles, matchName)
+        })
+    }
+    
+    // Player name is already taken
+
+    else if(games[matchName] && games[matchName].players.find( (currentPlayer) => {
+      return currentPlayer.playerName === playerName
+    })) socket.emit("name-is-already-taken")
+
+    // else if(matchName.length) socket.emit("game-already-started")
+
+    // game already started
+
+    // else if(games[matchName] && games[matchName].status === GAME_STATES.ACTIVE) socket.emit("game-already-started")
+
+    // new player that has to be registered
 
     else if(!onlinePlayers[registeredPlayerId]) {
-      let playerObject = { playerId: registeredPlayerId, playerName, socket, isHost: false, isConnected: true}
-      onlinePlayers[registeredPlayerId] = playerObject
-      pendingPlayers.push(registeredPlayerId);
-
-      onlinePlayers[registeredPlayerId].socket.join(`match-${totalMatches}`)
-      //first Player becomes Host-Player
-      if(pendingPlayers.length === 1) {
-        setHost()
+      if(!games[matchName]) {
+        games[matchName] = {
+          players: [],
+          day: 0,
+          hostPlayerId: "",
+          status: GAME_STATES.INACTIVE
+        }
       }
 
-      console.log('player socket id registered: ' + socket.id);
-      console.log('with playerName: ' + onlinePlayers[registeredPlayerId].playerName);
+      let playerObject = { playerId: registeredPlayerId, playerName, socket, matchName, isHost: false, isConnected: true}
+      onlinePlayers[registeredPlayerId] = playerObject
+      const matchPlayerObject = { playerId: registeredPlayerId, playerName, isHost: false, isConnected: true }
+      games[matchName].players.push(matchPlayerObject)
+
+      onlinePlayers[registeredPlayerId].socket.join(matchName)
+      //first Player becomes Host-Player
+      if(games[matchName].players.length === 1)
+        setHost(matchName)
+
+      listenForPlayerKick(matchName)
+
+      console.log('l.104 player socket id registered: ' + socket.id);
+      console.log('l.105 with playerName:', onlinePlayers[registeredPlayerId].playerName, "joined Match:", matchName);
 
       // only Host-Player can start the game
-      if (playerObject.isHost) {
-        socket.on('start-game', roles => {
-          createMatch(roles)
+      if (playerObject.isHost)
+        socket.on( 'start-game', roles => {
+          if (onlinePlayers[registeredPlayerId].isHost)
+            startMatch(roles, matchName)
         })
-      }
-      socket.emit("registered")
-    } else if(onlinePlayers[registeredPlayerId]) {
-      onlinePlayers[registeredPlayerId].socket.join(`match-${totalMatches}`)
-        
-      onlinePlayers[registeredPlayerId].disconnectedAt = null
-      onlinePlayers[registeredPlayerId].isConnected = true
-      onlinePlayers[registeredPlayerId].playerName = playerName
-      onlinePlayers[registeredPlayerId].socket = socket
+      socket.emit("registered", registeredPlayerId)
+      updateMatchInfo(matchName)
 
-      if (onlinePlayers[registeredPlayerId].isHost) {
-        socket.on('start-game', roles => {
-          createMatch(roles)
-        })
-      }
-      socket.emit("registered")
     }
-    sendPendingPlayers()
   })
 
   socket.on('disconnect', function () {
-    console.log("session timeout by Player with PlayerId: "+ registeredPlayerId);
+    if(!onlinePlayers[registeredPlayerId]) return
 
-    if(!onlinePlayers[registeredPlayerId]) {
-      return null
-    }
-    if (onlinePlayers[registeredPlayerId].isHost && pendingPlayers.length >= 1) {
+    console.log("l.122 session timeout by Player with PlayerId: "+ registeredPlayerId);
+    const matchName = onlinePlayers[registeredPlayerId].matchName
+    onlinePlayers[registeredPlayerId].socket.leave(matchName)
+
+    if (games[matchName] && games[matchName].players[registeredPlayerId] && games[matchName].players[registeredPlayerId].isHost && games[matchName].players.length >= 1) {
       onlinePlayers[registeredPlayerId].isHost = false
-      pendingPlayers.push(pendingPlayers.splice(pendingPlayers.indexOf(registeredPlayerId), 1)[0])
-      setHost()
+      games[matchName].players.push(games[matchName].players.splice(games[matchName].players.indexOf(registeredPlayerId), 1)[0])
+      setHost(matchName)
     }
 
-    console.log(`${registeredPlayerId} disconnected`);
+    console.log(`l.132 ${registeredPlayerId} disconnected`);
     onlinePlayers[registeredPlayerId].disconnectedAt = Date.now()
     onlinePlayers[registeredPlayerId].isConnected = false
-    sendPendingPlayers()
+    updateMatchInfo(matchName)
 
     setTimeout(() => {
 
@@ -115,8 +153,10 @@ io.on('connection', socket => {
         deletePlayer(registeredPlayerId)
         registeredPlayerId = null;
         
-        deletedPlayerIsHost && pendingPlayers.length >= 1 && setHost()
-        sendPendingPlayers()
+        if(deletedPlayerIsHost && games[matchName].players.length >= 1) {
+          setHost(matchName)
+          updateMatchInfo(matchName)
+        }
       }
     }, PLAYER_SESSION_TIMEOUT)
 
@@ -125,70 +165,109 @@ io.on('connection', socket => {
 })
 
 function deletePlayer(playerToDeleteId) {
-  console.log('user will be deleted: ' + playerToDeleteId);
-  console.log('player after disconnect: ', onlinePlayers);
+  console.log('l.154 user will be deleted: ' + playerToDeleteId)
+  console.log('l.155 player after disconnect: ', onlinePlayers)
 
-  // deleteMatch(onlinePlayers[registeredPlayer].match);
+  matchName = onlinePlayers[playerToDeleteId].matchName || false
+  if (games[matchName]) {
+    delete games[matchName].players[playerToDeleteId]
+    if(games[matchName].players.length === 0)
+      deleteMatch(matchName)
+  }
+
   delete onlinePlayers[playerToDeleteId]
-  pendingPlayers = pendingPlayers.filter(player => player !== playerToDeleteId)
+  // pendingPlayers = pendingPlayers.filter(player => player !== playerToDeleteId)
 }
 
-function setHost() {
-  onlinePlayers[pendingPlayers[0]].isHost = true
-  console.log(pendingPlayers[0] + "is now Host-Player")
-
+function setHost(matchName) {
+  if (games[matchName].players.length === 0) {
+    deleteMatch(matchName)
+    return
+  }
+  games[matchName].players[0].isHost = true
+  onlinePlayers[games[matchName].players[0].playerId].isHost = true
+  games[matchName].hostPlayerId = games[matchName].players[0].playerId
+  console.log("l.176",games[matchName].players[0].playerName, "is now Host-Player of match", matchName)
 }
 
-const sendPendingPlayers = () => {
-  console.log(pendingPlayers);
-  const updatedPlayers = pendingPlayersObjectList()
-  console.log(updatedPlayers);
-  pendingPlayers.forEach( pendingPlayer => {
-    onlinePlayers[pendingPlayer].socket.emit('players-updated', updatedPlayers)
+function listenForPlayerKick(matchName) {
+  onlinePlayers[games[matchName].hostPlayerId].socket.on( 'kick-player', playerName => {
+    playerToDeleteId = ""
+    games[matchName].players.find((element, index) => {
+      if(element.playerName === playerName) {
+        playerToDeleteId = games[matchName].players[index].playerId
+        return true
+      }
+    })
+    deletePlayer(playerToDeleteId)
+    updateMatchInfo(matchName)
+    listenForPlayerKick(matchName)
   })
+} 
 
-}
-function pendingPlayersObjectList() {
-  return pendingPlayers.map( currentPlayerId => {
-    const player = onlinePlayers[currentPlayerId]
-    return { playerName: player.playerName, isHost: player.isHost, isConnected: player.isConnected }
+function pendingPlayersObjectList(matchName) {
+  return games[matchName].players.map( currentPlayer => {
+    const { playerName, isHost, isConnected } = onlinePlayers[currentPlayer.playerId]
+    return { playerName, isHost, isConnected }
   })
 }
-
+function updateMatchInfo(matchName) {
+  console.log("l.186",pendingPlayersObjectList(matchName));
+  io.to(matchName).emit('match-info-update', {
+    matchName: matchName,
+    hostPlayerName: onlinePlayers[games[matchName].hostPlayerId].playerName,
+    players: pendingPlayersObjectList(matchName),
+    dayCount: games[matchName].dayCount,
+    isDay: games[matchName].isDay,
+    status: games[matchName].status
+  })
+}
 
 function deleteMatch(matchName) {
-  // TODO
+  delete games[matchName]
 }
 
-function createMatch(rolesPool) {
-  totalMatches++;
-  console.log(rolesPool);
-  let matchName = `match-${totalMatches}`
+function startMatch(rolesPool, matchName) {
+  console.log("l.202 test");
+  if (!games[matchName] || games[matchName].status == GAME_STATES.ACTIVE) {
+    console.log("l.203 wtf");
+    return
+  }
+  if( games[matchName].players.find( pendingPlayer => {
+    return !onlinePlayers[pendingPlayer.playerId].isConnected
+  }) || games[matchName].players.length <= 1 ) return
 
-  let players = pendingPlayersObjectList()
-  players.forEach( (currentPlayer, currentIndex) => {
+  console.log("l.210 create new Match");
+  console.log("211", rolesPool);
+
+  games[matchName].players.forEach( (currentPlayer, currentIndex) => {
     rolesPool.length<0 && rolesPool.push("Normal Citizen")
-    players[currentIndex].role = rolesPool.splice(randomNumberGenerator(0, rolesPool.length-1), 1)[0]
+    games[matchName].players[currentIndex].role = rolesPool.splice(randomNumberGenerator(0, rolesPool.length-1), 1)[0]
     rolesPool.length<0 && rolesPool.push("Normal Citizen")
   })
-  console.log(players);
+  console.log("l.218", games[matchName].players);
 
-  mafiaPlayerIndex = randomNumberGenerator(0, players.length-1)
-  console.log("mafiaPlayerIndex: "+ mafiaPlayerIndex, players.length-1);
-  rolesPool.push(players[mafiaPlayerIndex].role)
-  players[mafiaPlayerIndex].role = "Normal Mafia"
-  console.log(players);
+  mafiaPlayerIndex = randomNumberGenerator(0, games[matchName].players.length-1)
+  console.log("l.221 mafiaPlayerIndex: "+ mafiaPlayerIndex, games[matchName].players.length-1);
+  rolesPool.push(games[matchName].players[mafiaPlayerIndex].role)
+  games[matchName].players[mafiaPlayerIndex].role = "Normal Mafia"
+  console.log("l.224",games[matchName].players);
 
-  games[matchName] = {
-    players: players,
-    rolesPool,
-    status: GAME_STATES.ACTIVE
-  }
-  console.log(games);
+  games[matchName].rolesPool = rolesPool
+  games[matchName].dayCount = 1
+  games[matchName].isDay = true
+  games[matchName].status = GAME_STATES.ACTIVE
 
-  io.to("game").emit('match-created', games[matchName])
+  updateMatchInfo(matchName)
+
+  io.to(matchName).emit('match-created')
+
+  games[matchName].players.forEach( currentPlayer => {
+    onlinePlayers[currentPlayer.playerId].socket.emit('role-changed', currentPlayer.role)
+  })
   
-  pendingPlayers = []
+  // pendingPlayers = []
+  if (matchName.length>6) totalMatches++
 }
 
 function randomNumberGenerator (min, max) {
